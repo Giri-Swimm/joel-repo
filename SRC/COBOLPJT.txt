@@ -1,0 +1,406 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COBOLPJT.
+       AUTHOR. GIRI.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+            SELECT INFILE1 ASSIGN TO INSPS
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS WS-FS1.
+
+            SELECT INFILE2 ASSIGN TO AGNTPS
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS WS-FS2
+            .
+            SELECT OUTFILE1 ASSIGN TO INSERR
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS WS-FS3
+            .
+            SELECT OUTFILE2 ASSIGN TO AGNTERR
+            ORGANIZATION IS SEQUENTIAL
+            ACCESS IS SEQUENTIAL
+            FILE STATUS IS WS-FS4
+            .
+       DATA DIVISION.
+       FILE SECTION.
+       FD INFILE1
+           RECORDING MODE IS F.
+       01 INREC-INS.
+          05 POLICY-ID      PIC X(05).
+          05 F              PIC X.
+          05 POLICY-CODE    PIC X(10).
+          05 F              PIC X.
+          05 POLICY-NAME    PIC X(25).
+          05 F              PIC X.
+          05 POLICY-TYPE    PIC X(10).
+          05 F              PIC X.
+          05 TERM           PIC X(07).
+          05 F              PIC X.
+          05 POLICY-AMT     PIC X(10).
+          05 F              PIC X.
+          05 POLICY-PERIOD  PIC X(2).
+          05 F              PIC X(15).
+       FD INFILE2
+           RECORDING MODE IS F.
+       01 INREC-AGNT.
+           05 AGENT-CODE PIC X(05).
+           05 F          PIC X.
+           05 AGENT-NAME PIC X(10).
+           05 F          PIC X.
+           05 STREET     PIC X(20).
+           05 F          PIC X.
+           05 CITY       PIC X(20).
+           05 F          PIC X.
+           05 STATE      PIC X(20).
+           05 F          PIC X.
+           05 PIN        PIC X(06).
+           05 F          PIC X.
+           05 PHONE-NO   PIC X(10).
+           05 F          PIC X.
+           05 REG-NO     PIC X(15).
+           05 F          PIC X.
+           05 CMSN-PER   PIC X(02).
+           05 F          PIC X.
+           05 EMAIL      PIC X(29).
+           05 F          PIC X(14).
+         FD OUTFILE1
+             RECORDING MODE IS F.
+         01 INS-ERR.
+           05 E-POLICY-ID     PIC X(05).
+           05 F               PIC X.
+           05 E-POLICY-CODE   PIC X(10).
+           05 F               PIC X.
+           05 E-POLICY-NAME   PIC X(25).
+           05 F               PIC X.
+           05 E-POLICY-TYPE   PIC X(10).
+           05 F               PIC X.
+           05 E-TERM          PIC X(07).
+           05 F               PIC X.
+           05 E-POLICY-AMT    PIC X(10).
+           05 F               PIC X.
+           05 E-POLICY-PERIOD PIC X(2).
+           05 F               PIC X.
+           05 E-REASON        PIC X(25).
+           05 F               PIC X(59).
+         FD OUTFILE2
+             RECORDING MODE IS F.
+         01 AGNT-ERR.
+           05 E-AGENT-CODE PIC X(05).
+           05 F            PIC X.
+           05 E-AGENT-NAME PIC X(10).
+           05 F            PIC X.
+           05 E-STREET     PIC X(20).
+           05 F            PIC X.
+           05 E-CITY       PIC X(20).
+           05 F            PIC X.
+           05 E-STATE      PIC X(20).
+           05 F            PIC X.
+           05 E-PIN        PIC X(06).
+           05 F            PIC X.
+           05 E-PHONE-NO   PIC X(10).
+           05 F            PIC X.
+           05 E-REG-NO     PIC X(15).
+           05 F            PIC X.
+           05 E-CMSN-PER   PIC X(02).
+           05 F            PIC X.
+           05 E-EMAIL      PIC X(29).
+           05 F            PIC X.
+           05 E-REASON1    PIC X(30).
+           05 F            PIC X(23).
+       WORKING-STORAGE SECTION.
+           EXEC SQL INCLUDE SQLCA  END-EXEC.
+           EXEC SQL INCLUDE INSDCL END-EXEC.
+           EXEC SQL INCLUDE AGNTDCL END-EXEC.
+       01 ERR-MSG.
+         49 ERR-LEN  PIC S9(4) COMP VALUE 800.
+         49 ERR-CONT PIC X(80) OCCURS 10 TIMES.
+       01 ERR-LRECL  PIC S9(9) COMP VALUE 80.
+       01 WS-SQL     PIC S9(3) SIGN LEADING SEPARATE.
+       01 WS-FS.
+         05 WS-FS1   PIC 9(02).
+         05 WS-FS2   PIC 9(02).
+         05 WS-FS3   PIC 9(02).
+         05 WS-FS4   PIC 9(02).
+       01 WS-VALID-FLAG     PIC X(01) VALUE 'Y'.
+         88 WS-VALID-REC              VALUE 'Y'.
+         88 WS-INVALID-REC            VALUE 'N'.
+       PROCEDURE DIVISION.
+           PERFORM 1000-INIT-PARA THRU 1000-INIT-PARA-EXIT
+           PERFORM 2000-PROC-PARA THRU 2000-PROC-PARA-EXIT
+             UNTIL WS-FS1 = 10 AND WS-FS2 = 10
+           PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT.
+       1000-INIT-PARA.
+           INITIALIZE WS-FS
+           OPEN INPUT INFILE1 INFILE2
+             EVALUATE TRUE
+               WHEN WS-FS1 = 0 AND WS-FS2 = 0
+                 DISPLAY 'INPUT FILES OPENED'
+               WHEN OTHER
+                 DISPLAY 'INPUT FILES NOT OPENED ' WS-FS1 ' ' WS-FS2
+                 STOP RUN
+             END-EVALUATE.
+      *
+           OPEN OUTPUT OUTFILE1 OUTFILE2
+             EVALUATE TRUE
+               WHEN WS-FS3 = 0 AND WS-FS4 = 0
+                 DISPLAY 'OUTPUT FILES OPENED'
+               WHEN OTHER
+                 DISPLAY 'OUTPUT FILES NOT OPENED ' WS-FS3 ' ' WS-FS4
+                 CLOSE INFILE1 INFILE2
+                 STOP RUN
+             END-EVALUATE.
+       1000-INIT-PARA-EXIT.
+           EXIT.
+       2000-PROC-PARA.
+           READ INFILE1
+           EVALUATE TRUE
+             WHEN WS-FS1 = 0
+               DISPLAY 'READ INSURANCE INPUT FILE SUCCESS'
+             WHEN WS-FS1 = 10
+               DISPLAY 'INSPS END OF THE FILE REACHED' WS-FS1
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+      *
+           READ INFILE2
+           EVALUATE TRUE
+             WHEN WS-FS2 = 0
+               DISPLAY 'READ AGENT INPUT FILE SUCCESS'
+             WHEN WS-FS2 = 10
+               DISPLAY 'READ REACHED END OF RECORDS FOR AGENT'
+               CONTINUE
+             WHEN OTHER
+               DISPLAY 'READ FAILED FOR AGENT FILE' WS-FS2
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+      *
+           PERFORM INS-VALID-PARA THRU INS-VALID-PARA-EXIT.
+           EVALUATE TRUE
+             WHEN WS-VALID-REC
+               PERFORM INS-TABLE-PARA    THRU INS-TABLE-PARA-EXIT
+             WHEN OTHER
+               PERFORM WRITE-INSERR-PARA THRU WRITE-INSERR-PARA-EXIT
+           END-EVALUATE.
+      *
+           PERFORM AGT-VALID-PARA THRU AGT-VALID-PARA-EXIT.
+           EVALUATE TRUE
+             WHEN WS-VALID-REC
+               PERFORM AGT-TABLE-PARA    THRU AGT-TABLE-PARA-EXIT
+             WHEN OTHER
+               PERFORM WRITE-AGTERR-PARA THRU WRITE-AGTERR-PARA-EXIT
+           END-EVALUATE.
+       2000-PROC-PARA-EXIT.
+           EXIT.
+       INS-VALID-PARA.
+           EVALUATE TRUE
+             WHEN POLICY-ID IS ALPHABETIC OR
+                  POLICY-ID IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-ID' TO E-REASON
+             WHEN POLICY-CODE IS ALPHABETIC OR
+                  POLICY-CODE IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-CODE' TO E-REASON
+             WHEN POLICY-NAME IS NOT ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-NAME' TO E-REASON
+             WHEN POLICY-TYPE IS NOT ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-TYPE' TO E-REASON
+             WHEN TERM IS NOT ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID TERM' TO E-REASON
+             WHEN POLICY-AMT IS NOT NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-AMT' TO E-REASON
+             WHEN POLICY-PERIOD IS NOT NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID POLICY-PERIOD' TO E-REASON
+             WHEN OTHER
+               MOVE 'Y' TO WS-VALID-FLAG
+           END-EVALUATE.
+       INS-VALID-PARA-EXIT.
+           EXIT.
+       AGT-VALID-PARA.
+           EVALUATE TRUE
+             WHEN AGENT-CODE IS NUMERIC OR
+                  AGENT-CODE IS ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID AGENT-CODE' TO E-REASON1
+             WHEN AGENT-NAME IS ALPHABETIC OR
+                  AGENT-NAME IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID AGENT-NAME' TO E-REASON1
+             WHEN STREET IS ALPHABETIC OR
+                  STREET IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID STREET' TO E-REASON1
+             WHEN CITY IS NOT ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID CITY' TO E-REASON1
+             WHEN STATE IS NOT ALPHABETIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID STATE' TO E-REASON1
+             WHEN PIN IS NOT NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID PIN' TO E-REASON1
+             WHEN PHONE-NO IS NOT NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID AGENT-NAME' TO E-REASON1
+             WHEN REG-NO IS ALPHABETIC OR
+                  REG-NO IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID REG-NO' TO E-REASON1
+             WHEN CMSN-PER IS NOT NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID CMSN-PER' TO E-REASON1
+             WHEN EMAIL IS NUMERIC
+               MOVE 'N' TO WS-VALID-FLAG
+               MOVE 'INVALID EMAIL' TO E-REASON1
+             WHEN OTHER
+               MOVE 'Y' TO WS-VALID-FLAG
+           END-EVALUATE.
+       AGT-VALID-PARA-EXIT.
+           EXIT.
+       INS-TABLE-PARA.
+           INITIALIZE DCLINSURANCE-POLICY
+           MOVE POLICY-ID   TO HV-POLICY-ID
+           MOVE POLICY-CODE(1:5) TO HV-POLICY-CODE(1:5)
+           MOVE '-'              TO HV-POLICY-CODE(6:1)
+           MOVE POLICY-CODE(6:5) TO HV-POLICY-CODE(7:5)
+           MOVE POLICY-NAME TO HV-POLICY-NAME
+           MOVE POLICY-TYPE TO HV-POLICY-TYPE
+           MOVE TERM        TO HV-TERM
+           MOVE POLICY-AMT(1:1) TO HV-POLICY-AMT(1:1)
+           MOVE ','             TO HV-POLICY-AMT(2:1)
+           MOVE POLICY-AMT(2:3) TO HV-POLICY-AMT(3:3)
+           MOVE ','             TO HV-POLICY-AMT(6:1)
+           MOVE POLICY-AMT(5:3) TO HV-POLICY-AMT(7:3)
+           MOVE ','             TO HV-POLICY-AMT(10:1)
+           MOVE POLICY-AMT(8:3) TO HV-POLICY-AMT(11:3)
+           MOVE POLICY-PERIOD    TO HV-POLICY-PERIOD
+           EXEC SQL
+             INSERT INTO INSURANCE_POLICY
+             VALUES(:HV-POLICY-ID,
+                    :HV-POLICY-CODE,
+                    :HV-POLICY-NAME,
+                    :HV-POLICY-TYPE,
+                    :HV-TERM,
+                    :HV-POLICY-AMT,
+                    :HV-POLICY-PERIOD)
+           END-EXEC.
+           MOVE SQLCODE TO WS-SQL.
+           DISPLAY WS-SQL
+           EVALUATE TRUE
+             WHEN WS-SQL = 0
+               DISPLAY 'NEW RECORD INSERTED'
+               CONTINUE
+             WHEN OTHER
+               DISPLAY 'ERROR = ' WS-SQL ', RECORD NOT INSERTED'
+               CALL 'DSNTIAR' USING SQLCA, ERR-MSG, ERR-LRECL
+               DISPLAY ERR-MSG
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+       INS-TABLE-PARA-EXIT.
+           EXIT.
+       AGT-TABLE-PARA.
+           INITIALIZE DCLAGENT-DETAILS
+           MOVE AGENT-CODE TO HV-AGENT-CODE
+           MOVE AGENT-NAME TO HV-AGENT-NAME
+           MOVE STREET     TO HV-STREET
+           MOVE CITY       TO HV-CITY
+           MOVE STATE      TO HV-STATE
+           MOVE PIN        TO HV-PIN
+           MOVE PHONE-NO(1:2) TO HV-PHONE-NO(1:2)
+           MOVE '-'           TO HV-PHONE-NO(3:1)
+           MOVE PHONE-NO(3:4) TO HV-PHONE-NO(4:4)
+           MOVE '-'           TO HV-PHONE-NO(8:1)
+           MOVE PHONE-NO(7:4) TO HV-PHONE-NO(9:4)
+           MOVE REG-NO(1:2)   TO HV-REG-NO(1:2)
+           MOVE '-'           TO HV-REG-NO(3:1)
+           MOVE REG-NO(3:3)   TO HV-REG-NO(4:3)
+           MOVE '-'           TO HV-REG-NO(7:1)
+           MOVE REG-NO(6:4)   TO HV-REG-NO(8:4)
+           MOVE '-'           TO HV-REG-NO(12:1)
+           MOVE REG-NO(10:5)  TO HV-REG-NO(13:5)
+           MOVE CMSN-PER   TO HV-CMSN-PER
+           MOVE EMAIL  TO HV-EMAIL
+           EXEC SQL
+             INSERT INTO AGENT_DETAILS
+             VALUES(:HV-AGENT-CODE,
+                    :HV-AGENT-NAME,
+                    :HV-STREET,
+                    :HV-CITY,
+                    :HV-STATE,
+                    :HV-PIN,
+                    :HV-PHONE-NO,
+                    :HV-REG-NO,
+                    :HV-CMSN-PER,
+                    :HV-EMAIL)
+           END-EXEC.
+           MOVE SQLCODE TO WS-SQL.
+           DISPLAY WS-SQL
+           EVALUATE TRUE
+             WHEN WS-SQL = 0
+               DISPLAY 'NEW RECORD INSERTED'
+               CONTINUE
+             WHEN OTHER
+               DISPLAY 'ERROR = ' WS-SQL ', RECORD NOT INSERTED'
+               CALL 'DSNTIAR' USING SQLCA, ERR-MSG, ERR-LRECL
+               DISPLAY ERR-MSG
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+       AGT-TABLE-PARA-EXIT.
+           EXIT.
+       WRITE-INSERR-PARA.
+           MOVE POLICY-ID   TO E-POLICY-ID
+           MOVE POLICY-CODE TO E-POLICY-CODE
+           MOVE POLICY-NAME TO E-POLICY-NAME
+           MOVE POLICY-TYPE TO E-POLICY-TYPE
+           MOVE TERM        TO E-TERM
+           MOVE POLICY-AMT  TO E-POLICY-AMT
+           MOVE POLICY-PERIOD    TO E-POLICY-PERIOD
+             WRITE INS-ERR.
+           EVALUATE TRUE
+             WHEN WS-FS3 = 0
+               DISPLAY 'INVALID RECORD INSERTED FOR INSURANCE'
+             WHEN WS-FS3 = 10
+               DISPLAY 'ALL INVALID RECORDS OF INSURANCE ARE INSERTED'
+             WHEN OTHER
+               DISPLAY 'INVALID RECORD INSERTION FAILED FOR INSURANCE'
+               WS-FS3
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+       WRITE-INSERR-PARA-EXIT.
+           EXIT.
+       WRITE-AGTERR-PARA.
+           MOVE AGENT-CODE TO E-AGENT-CODE
+           MOVE AGENT-NAME TO E-AGENT-NAME
+           MOVE STREET     TO E-STREET
+           MOVE CITY       TO E-CITY
+           MOVE STATE      TO E-STATE
+           MOVE PIN        TO E-PIN
+           MOVE PHONE-NO   TO E-PHONE-NO
+           MOVE REG-NO     TO E-REG-NO
+           MOVE CMSN-PER   TO E-CMSN-PER
+           MOVE EMAIL      TO E-EMAIL
+           WRITE AGNT-ERR.
+           EVALUATE TRUE
+             WHEN WS-FS3 = 0
+               DISPLAY 'INVALID RECORD INSERTED FOR AGENT'
+             WHEN WS-FS3 = 10
+               DISPLAY 'ALL INVALID RECORDS OF AGENT ARE INSERTED'
+             WHEN OTHER
+               DISPLAY 'INVALID RECORD INSERTION FAILED FOR AGENT'
+               WS-FS3
+               PERFORM 9000-TERM-PARA THRU 9000-TERM-PARA-EXIT
+           END-EVALUATE.
+       WRITE-AGTERR-PARA-EXIT.
+           EXIT.
+       9000-TERM-PARA.
+           CLOSE INFILE1 INFILE2 OUTFILE1 OUTFILE2
+           STOP RUN.
+       9000-TERM-PARA-EXIT.
+

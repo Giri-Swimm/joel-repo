@@ -1,0 +1,50 @@
+      ******************************************************************
+      * DCLGEN TABLE(INSURANCE_POLICY)                                 *
+      *        LIBRARY(TECN062.PROJECT.MAJOR(INSDCL))                  *
+      *        ACTION(REPLACE)                                         *
+      *        LANGUAGE(COBOL)                                         *
+      *        NAMES(HV-)                                              *
+      *        QUOTE                                                   *
+      *        LABEL(YES)                                              *
+      *        DBCSDELIM(NO)                                           *
+      *        COLSUFFIX(YES)                                          *
+      * ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS   *
+      ******************************************************************
+      *     EXEC SQL DECLARE INSURANCE_POLICY TABLE
+      *     ( POLICY_ID                      CHAR(5),
+      *       POLICY_CODE                    CHAR(11),
+      *       POLICY_NAME                    CHAR(25),
+      *       POLICY_TYPE                    CHAR(10),
+      *       TERM                           CHAR(7),
+      *       POLICY_AMT                     CHAR(13),
+      *       POLICY_PERIOD                  CHAR(2)
+      *     ) END-EXEC.
+      ******************************************************************
+      * COBOL DECLARATION FOR TABLE INSURANCE_POLICY                   *
+      ******************************************************************
+       01  DCLINSURANCE-POLICY.
+      *    *************************************************************
+      *                       POLICY_ID
+           10 HV-POLICY-ID         PIC X(5).
+      *    *************************************************************
+      *                       POLICY_CODE
+           10 HV-POLICY-CODE       PIC X(11).
+      *    *************************************************************
+      *                       POLICY_NAME
+           10 HV-POLICY-NAME       PIC X(25).
+      *    *************************************************************
+      *                       POLICY_TYPE
+           10 HV-POLICY-TYPE       PIC X(10).
+      *    *************************************************************
+      *                       TERM
+           10 HV-TERM              PIC X(7).
+      *    *************************************************************
+      *                       POLICY_AMT
+           10 HV-POLICY-AMT        PIC X(13).
+      *    *************************************************************
+      *                       POLICY_PERIOD
+           10 HV-POLICY-PERIOD     PIC X(2).
+      ******************************************************************
+      * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 7       *
+      ******************************************************************
+

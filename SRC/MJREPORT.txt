@@ -1,0 +1,175 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. MJREPORT.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+               SELECT REPORT1 ASSIGN TO OUTFILE
+               ORGANIZATION IS SEQUENTIAL
+               ACCESS IS SEQUENTIAL
+               FILE STATUS IS WS-FS1.
+       DATA DIVISION.
+       FILE SECTION.
+       FD REPORT1 RECORDING MODE IS F.
+       01 REPORT1-REC.
+          05 REP-POLICY-ID           PIC X(5).
+          05 FILLER                  PIC X(5).
+          05 REP-POLICY-CODE         PIC X(11).
+          05 FILLER                  PIC X(3).
+          05 REP-POLICY-TYPE         PIC X(10).
+          05 FILLER                  PIC X(3).
+          05 REP-TERM                PIC X(7).
+          05 FILLER                  PIC X(36).
+       WORKING-STORAGE SECTION.
+            EXEC SQL INCLUDE SQLCA END-EXEC.
+            EXEC SQL INCLUDE INSDCL END-EXEC.
+       01 LN-CT                    PIC 9(4) VALUE 0.
+       01 FILE-STATUS.
+          05 WS-FS1               PIC 9(2).
+             88 CO2-SUC           VALUE 00.
+             88 CO2-EOF           VALUE 10.
+       01 HEADER1.
+           05 FILLER              PIC X(25).
+           05 FILLER              PIC X(30)
+                    VALUE 'LIFE INSURANCE DETAIL REPORT'.
+           05 FILLER              PIC X(25).
+       01 FILLER2                 PIC X(80).
+       01 HEADER2.
+           05 FILLER              PIC X(5) VALUE 'DATE:'.
+           05 DATE11              PIC X(8).
+           05 FILLER              PIC X(38).
+           05 PAGEN               PIC X(5) VALUE 'PAGE:'.
+           05 PG-CT               PIC 9(04) VALUE 1.
+           05 FILLER              PIC X(20).
+       01 HEADER3.
+           05 FILLER              PIC X(5) VALUE 'TIME:'.
+           05 TIME1               PIC X(8).
+           05 FILLER              PIC X(38).
+           05 REPORT1N            PIC X(10) VALUE 'REPORT ID:'.
+           05 IDD                 PIC 9(04) VALUE 1006.
+           05 FILLER              PIC X(10).
+       01 TT1.
+           05 FILLER              PIC X(9) VALUE 'POLICY ID'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(12) VALUE 'POLICY CODE'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(12) VALUE 'POLICY TYPE'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(8) VALUE 'TERM'.
+           05 FILLER              PIC X(36).
+       01 TT2.
+           05 FILLER              PIC X(9) VALUE ALL '-'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(12) VALUE ALL '-'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(12) VALUE ALL '-'.
+           05 FILLER              PIC X(1).
+           05 FILLER              PIC X(8) VALUE ALL '-'.
+           05 FILLER              PIC X(36).
+       01 HEADER4.
+           05 FILLER              PIC X(50).
+           05 PAGEN               PIC X(5) VALUE 'PAGE:'.
+           05 PG-CT1              PIC 9(04).
+           05 FILLER              PIC X(21).
+       01 HEADER5.
+           05 FILLER              PIC X(50).
+           05 REPORT1N            PIC X(10) VALUE 'REPORT ID:'.
+           05 IDD                 PIC 9(04) VALUE 1006.
+           05 FILLER              PIC X(16).
+       01 TRAILER1.
+           05 FILLER              PIC X(34) VALUE ALL '-'.
+           05 EOP1                PIC X(11) VALUE 'END OF PAGE'.
+           05 FILLER              PIC X(35) VALUE ALL '-'.
+       01 TRAILER2.
+           05 FILLER              PIC X(33) VALUE ALL '*'.
+           05 EOR1                PIC X(13) VALUE 'END OF REPORT'.
+           05 FILLER              PIC X(34) VALUE ALL '*'.
+       01 TEMPTIME       PIC X(10).
+       PROCEDURE DIVISION.
+       MAIN-PARA.
+              ACCEPT DATE11 FROM DATE YYYYMMDD.
+              ACCEPT TEMPTIME FROM TIME.
+              MOVE TEMPTIME(1:2) TO TIME1(1:2).
+              MOVE ':' TO TIME1(3:1).
+              MOVE TEMPTIME(3:2) TO TIME1(4:2).
+              MOVE ':' TO TIME1(6:1).
+              MOVE TEMPTIME(5:2) TO TIME1(7:2).
+              PERFORM OPEN-PARA.
+              PERFORM REPORT1-PARA.
+              PERFORM AFTER-REPORT1.
+              PERFORM CLOSE-PARA.
+              STOP RUN.
+       OPEN-PARA.
+              EXEC SQL
+                DECLARE INS-CURSOR CURSOR FOR
+                SELECT POLICY_ID,POLICY_CODE,POLICY_TYPE,TERM
+                FROM INSURANCE_POLICY
+              END-EXEC.
+              EXEC SQL OPEN INS-CURSOR END-EXEC.
+              OPEN OUTPUT REPORT1.
+              EVALUATE TRUE
+              WHEN CO2-SUC
+               WRITE REPORT1-REC FROM HEADER1
+               WRITE REPORT1-REC FROM FILLER2
+               WRITE REPORT1-REC FROM HEADER2
+               WRITE REPORT1-REC FROM HEADER3
+               WRITE REPORT1-REC FROM TT1
+               WRITE REPORT1-REC FROM TT2
+               DISPLAY 'REPORT1 OPEN SUCCESS'
+              WHEN OTHER
+               DISPLAY 'REPORT1 OPEN FAIL' WS-FS1
+              END-EVALUATE.
+       CLOSE-PARA.
+              EXEC SQL CLOSE INS-CURSOR END-EXEC.
+              EXEC SQL COMMIT END-EXEC.
+              WRITE REPORT1-REC FROM TRAILER2.
+              CLOSE REPORT1.
+              EVALUATE TRUE
+               WHEN CO2-SUC
+                DISPLAY 'REPORT1 CLOSE SUCCESS'
+               WHEN OTHER
+                DISPLAY 'REPORT1 CLOSE FAIL' WS-FS1
+              END-EVALUATE.
+       REPORT1-PARA.
+              PERFORM REPORT2-PARA UNTIL SQLCODE = 100.
+       REPORT2-PARA.
+              EXEC SQL
+                  FETCH INS-CURSOR INTO
+                  :HV-POLICY-ID,
+                  :HV-POLICY-CODE,
+                  :HV-POLICY-TYPE,
+                  :HV-TERM
+              END-EXEC
+              EVALUATE TRUE
+              WHEN SQLCODE = 0
+               IF LN-CT = 11 THEN
+                PERFORM TRAILER-PARA
+                ADD 1 TO PG-CT
+                MOVE PG-CT TO PG-CT1
+                PERFORM HEADER-PARA
+                MOVE 0 TO LN-CT
+               END-IF
+               PERFORM LOAD-PARA
+              WHEN SQLCODE = 100
+               DISPLAY 'END OF DATA'
+              WHEN OTHER
+               DISPLAY 'ERROR IN FETCHING' SQLCODE
+              END-EVALUATE.
+       LOAD-PARA.
+               ADD 1 TO LN-CT
+               MOVE HV-POLICY-ID     TO REP-POLICY-ID
+               MOVE HV-POLICY-CODE   TO REP-POLICY-CODE
+               MOVE HV-POLICY-TYPE   TO REP-POLICY-TYPE
+               MOVE HV-TERM          TO REP-TERM
+               WRITE REPORT1-REC.
+       HEADER-PARA.
+               WRITE REPORT1-REC FROM HEADER4.
+               WRITE REPORT1-REC FROM HEADER5.
+               WRITE REPORT1-REC FROM TT1.
+               WRITE REPORT1-REC FROM TT2.
+       TRAILER-PARA.
+               WRITE REPORT1-REC FROM TRAILER1.
+       AFTER-REPORT1.
+           IF LN-CT > 0 THEN
+               PERFORM TRAILER-PARA
+           END-IF.
+

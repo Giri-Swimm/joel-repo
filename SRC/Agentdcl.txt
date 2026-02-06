@@ -1,0 +1,62 @@
+      ******************************************************************
+      * DCLGEN TABLE(AGENT_DETAILS)                                    *
+      *        LIBRARY(TECN062.PROJECT.MAJOR(AGNTDCL))                 *
+      *        ACTION(REPLACE)                                         *
+      *        LANGUAGE(COBOL)                                         *
+      *        NAMES(HV-)                                              *
+      *        QUOTE                                                   *
+      *        LABEL(YES)                                              *
+      *        DBCSDELIM(NO)                                           *
+      *        COLSUFFIX(YES)                                          *
+      * ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS   *
+      ******************************************************************
+      *     EXEC SQL DECLARE AGENT_DETAILS TABLE
+      *     ( AGENT_CODE                     CHAR(5),
+      *       AGENT_NAME                     CHAR(10),
+      *       STREET                         CHAR(20),
+      *       CITY                           CHAR(20),
+      *       STATE                          CHAR(20),
+      *       PIN                            CHAR(20),
+      *       PHONE_NO                       CHAR(12),
+      *       REG_NO                         CHAR(17),
+      *       CMSN_PER                       CHAR(2),
+      *       EMAIL                          CHAR(40)
+      *     ) END-EXEC.
+      ******************************************************************
+      * COBOL DECLARATION FOR TABLE AGENT_DETAILS                      *
+      ******************************************************************
+       01  DCLAGENT-DETAILS.
+      *    *************************************************************
+      *                       AGENT_CODE
+           10 HV-AGENT-CODE        PIC X(5).
+      *    *************************************************************
+      *                       AGENT_NAME
+           10 HV-AGENT-NAME        PIC X(10).
+      *    *************************************************************
+      *                       STREET
+           10 HV-STREET            PIC X(20).
+      *    *************************************************************
+      *                       CITY
+           10 HV-CITY              PIC X(20).
+      *    *************************************************************
+      *                       STATE
+           10 HV-STATE             PIC X(20).
+      *    *************************************************************
+      *                       PIN
+           10 HV-PIN               PIC X(20).
+      *    *************************************************************
+      *                       PHONE_NO
+           10 HV-PHONE-NO          PIC X(12).
+      *    *************************************************************
+      *                       REG_NO
+           10 HV-REG-NO            PIC X(17).
+      *    *************************************************************
+      *                       CMSN_PER
+           10 HV-CMSN-PER          PIC X(2).
+      *    *************************************************************
+      *                       EMAIL
+           10 HV-EMAIL             PIC X(40).
+      ******************************************************************
+      * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 10      *
+      ******************************************************************
+
